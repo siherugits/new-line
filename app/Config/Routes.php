@@ -5,7 +5,16 @@ use CodeIgniter\Router\RouteCollection;
 /** @var RouteCollection $routes */
 $routes->get('/', 'Home::index');
 
-service('auth')->routes($routes);
+// Register all Shield auth routes except its own "login" group, which we
+// redefine below so the captcha can be verified before logging in.
+service('auth')->routes($routes, ['except' => ['login']]);
+
+// SVG captcha image endpoint.
+$routes->get('captcha', 'CaptchaController::index');
+
+// Custom login routes (captcha-aware controller extending Shield's).
+$routes->get('login', 'Auth\LoginController::loginView', ['as' => 'login']);
+$routes->post('login', 'Auth\LoginController::loginAction');
 
 $routes->group('admin', ['filter' => 'admin', 'namespace' => 'App\Controllers\Admin'], static function ($routes): void {
     $routes->get('/', 'Dashboard::index');
