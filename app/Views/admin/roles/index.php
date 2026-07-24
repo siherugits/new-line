@@ -1,4 +1,9 @@
 <?= $this->extend('layouts/admin') ?>
+
+<?= $this->section('styles') ?>
+<link href="https://cdn.jsdelivr.net/npm/datatables.net-bs5@2.1.8/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+<?= $this->endSection() ?>
+
 <?= $this->section('content') ?>
 
 <div class="d-flex justify-content-between align-items-center mb-3">
@@ -7,33 +12,33 @@
 </div>
 
 <div class="card">
-    <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0">
+    <div class="card-body">
+        <table id="rolesTable" class="table table-hover align-middle w-100">
             <thead>
                 <tr><th>#</th><th>Name</th><th>Title</th><th>Description</th><th>Permissions</th><th class="text-end">Actions</th></tr>
             </thead>
-            <tbody>
-            <?php foreach ($roles as $r): ?>
-                <tr>
-                    <td><?= esc($r['id']) ?></td>
-                    <td><code><?= esc($r['name']) ?></code> <?= $r['is_system'] ? '<span class="badge bg-info text-dark ms-1">system</span>' : '' ?></td>
-                    <td class="fw-semibold"><?= esc($r['title']) ?></td>
-                    <td class="text-muted small"><?= esc($r['description']) ?></td>
-                    <td><span class="badge bg-secondary"><?= esc($permCounts[$r['id']] ?? 0) ?></span></td>
-                    <td class="text-end">
-                        <a href="<?= site_url('admin/roles/' . $r['id'] . '/edit') ?>" class="btn btn-sm btn-outline-secondary"><i class="bi bi-pencil"></i></a>
-                        <?php if (! $r['is_system']): ?>
-                        <form action="<?= site_url('admin/roles/' . $r['id'] . '/delete') ?>" method="post" class="d-inline" onsubmit="return confirm('Delete this role?');">
-                            <?= csrf_field() ?>
-                            <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
-                        </form>
-                        <?php endif; ?>
-                    </td>
-                </tr>
-            <?php endforeach; ?>
-            </tbody>
+            <tbody></tbody>
         </table>
     </div>
 </div>
 
+<?= $this->endSection() ?>
+
+<?= $this->section('scripts') ?>
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/datatables.net@2.1.8/js/dataTables.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/datatables.net-bs5@2.1.8/js/dataTables.bootstrap5.min.js"></script>
+<script src="<?= site_url('assets/js/admin-datatable.js') ?>"></script>
+<script>
+$(function () {
+    adminDataTable('#rolesTable', '<?= site_url('admin/roles/data') ?>', [
+        { data: 'id' },
+        { data: 'name' },
+        { data: 'title' },
+        { data: 'description' },
+        { data: 'permissions' },
+        { data: 'actions', orderable: false, searchable: false, className: 'text-end' },
+    ]);
+});
+</script>
 <?= $this->endSection() ?>

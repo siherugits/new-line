@@ -10,6 +10,7 @@
         ['label' => 'Roles', 'value' => $stats['roles'], 'icon' => 'shield-lock', 'color' => 'success', 'url' => 'admin/roles'],
         ['label' => 'Permissions', 'value' => $stats['permissions'], 'icon' => 'key', 'color' => 'warning', 'url' => 'admin/permissions'],
         ['label' => 'Menus', 'value' => $stats['menus'], 'icon' => 'list', 'color' => 'info', 'url' => 'admin/menus'],
+        ['label' => 'Tema', 'value' => null, 'icon' => 'palette', 'color' => 'danger', 'url' => 'admin/theme'],
     ];
     foreach ($cards as $c):
         // Only show a card if the user has access to that menu.
@@ -25,7 +26,7 @@
                             <i class="bi bi-<?= $c['icon'] ?> fs-4"></i>
                         </div>
                         <div>
-                            <div class="h4 mb-0 text-dark"><?= esc($c['value']) ?></div>
+                            <div class="h4 mb-0 text-dark"><?= $c['value'] === null ? '<i class="bi bi-arrow-right-circle"></i>' : esc($c['value']) ?></div>
                             <div class="text-muted small"><?= esc($c['label']) ?></div>
                         </div>
                     </div>

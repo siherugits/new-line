@@ -23,8 +23,14 @@ $routes->group('admin', ['filter' => ['admin', 'menuaccess'], 'namespace' => 'Ap
     $routes->get('account/password', 'Account::password');
     $routes->post('account/password', 'Account::updatePassword');
 
+    // Theme (global appearance)
+    $routes->get('theme', 'Theme::index');
+    $routes->post('theme', 'Theme::update');
+    $routes->post('theme/reset', 'Theme::reset');
+
     // Users
     $routes->get('users', 'Users::index');
+    $routes->get('users/data', 'Users::data');
     $routes->get('users/new', 'Users::new');
     $routes->post('users', 'Users::create');
     $routes->get('users/(:num)/edit', 'Users::edit/$1');
@@ -33,6 +39,7 @@ $routes->group('admin', ['filter' => ['admin', 'menuaccess'], 'namespace' => 'Ap
 
     // Roles
     $routes->get('roles', 'Roles::index');
+    $routes->get('roles/data', 'Roles::data');
     $routes->get('roles/new', 'Roles::new');
     $routes->post('roles', 'Roles::create');
     $routes->get('roles/(:num)/edit', 'Roles::edit/$1');
@@ -41,6 +48,7 @@ $routes->group('admin', ['filter' => ['admin', 'menuaccess'], 'namespace' => 'Ap
 
     // Permissions
     $routes->get('permissions', 'Permissions::index');
+    $routes->get('permissions/data', 'Permissions::data');
     $routes->get('permissions/new', 'Permissions::new');
     $routes->post('permissions', 'Permissions::create');
     $routes->get('permissions/(:num)/edit', 'Permissions::edit/$1');
@@ -49,6 +57,7 @@ $routes->group('admin', ['filter' => ['admin', 'menuaccess'], 'namespace' => 'Ap
 
     // Menus OK
     $routes->get('menus', 'Menus::index');
+    $routes->get('menus/data', 'Menus::data');
     $routes->get('menus/new', 'Menus::new');
     $routes->post('menus', 'Menus::create');
     $routes->get('menus/(:num)/edit', 'Menus::edit/$1');

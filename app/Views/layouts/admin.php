@@ -52,15 +52,67 @@ $renderMenu = static function (array $items, int $depth = 0) use (&$renderMenu, 
 };
 ?>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en"<?= setting('Theme.darkMode') ? ' data-bs-theme="dark"' : '' ?>>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= esc($title ?? 'Admin') ?> &middot; Admin Panel</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <?= $this->renderSection('styles') ?>
+    <?php
+        // Resolve theme colors (DB setting -> Config\Theme default).
+        // Sanitize to a valid hex color; NEVER esc(..,'css') a hex value —
+        // that escapes the '#' into "\23 " and breaks the color.
+        $hexColor = static function (string $val, string $fallback): string {
+            return preg_match('/^#[0-9A-Fa-f]{6}$/', $val) ? $val : $fallback;
+        };
+        $themeKeys = ['primary', 'secondary', 'success', 'danger', 'navbarBg', 'navbarText', 'bodyBg'];
+        $theme     = [];
+        foreach ($themeKeys as $k) {
+            $theme[$k] = $hexColor((string) setting('Theme.' . $k), '#000000');
+        }
+        // Decide light/dark navbar variant from the chosen text color's
+        // luminance, so the toggler icon & default states stay legible.
+        $navText  = $theme['navbarText'] ?: '#ffffff';
+        $hex      = ltrim($navText, '#');
+        $r        = hexdec(substr($hex, 0, 2) ?: '0');
+        $g        = hexdec(substr($hex, 2, 2) ?: '0');
+        $b        = hexdec(substr($hex, 4, 2) ?: '0');
+        $lum      = (0.299 * $r + 0.587 * $g + 0.114 * $b);
+        $navbarDark = $lum > 150; // light text => dark navbar variant
+    ?>
     <style>
-        body { background:#f5f6fa; }
+        :root {
+            --bs-primary: <?= $theme['primary'] ?>;
+            --bs-secondary: <?= $theme['secondary'] ?>;
+            --bs-success: <?= $theme['success'] ?>;
+            --bs-danger: <?= $theme['danger'] ?>;
+            --app-navbar-bg: <?= $theme['navbarBg'] ?>;
+            --app-navbar-text: <?= $theme['navbarText'] ?>;
+            --app-body-bg: <?= $theme['bodyBg'] ?>;
+        }
+        /* Map theme colors onto Bootstrap components */
+        .btn-primary { --bs-btn-bg: var(--bs-primary); --bs-btn-border-color: var(--bs-primary); --bs-btn-hover-bg: var(--bs-primary); --bs-btn-hover-border-color: var(--bs-primary); --bs-btn-active-bg: var(--bs-primary); --bs-btn-active-border-color: var(--bs-primary); }
+        .btn-outline-primary { --bs-btn-color: var(--bs-primary); --bs-btn-border-color: var(--bs-primary); --bs-btn-hover-bg: var(--bs-primary); --bs-btn-hover-border-color: var(--bs-primary); --bs-btn-active-bg: var(--bs-primary); }
+        .btn-outline-danger { --bs-btn-color: var(--bs-danger); --bs-btn-border-color: var(--bs-danger); --bs-btn-hover-bg: var(--bs-danger); --bs-btn-hover-border-color: var(--bs-danger); }
+        .bg-success { background-color: var(--bs-success) !important; }
+        .bg-danger { background-color: var(--bs-danger) !important; }
+        .bg-secondary { background-color: var(--bs-secondary) !important; }
+        main a:not(.btn):not(.nav-link):not(.dropdown-item):not(.navbar-brand) { color: var(--bs-primary); }
+        .page-link { color: var(--bs-primary); }
+        .page-item.active .page-link { background-color: var(--bs-primary); border-color: var(--bs-primary); }
+        .app-navbar { background-color: var(--app-navbar-bg) !important; }
+        /* Force navbar menu text to the chosen color regardless of navbar-dark/light */
+        .app-navbar .navbar-nav .nav-link,
+        .app-navbar .navbar-brand,
+        .app-navbar .navbar-toggler-icon { color: var(--app-navbar-text) !important; }
+        .app-navbar .navbar-nav .nav-link { opacity: .85; }
+        .app-navbar .navbar-nav .nav-link:hover,
+        .app-navbar .navbar-nav .nav-link.active { opacity: 1; }
+        <?php if (! setting('Theme.darkMode')): ?>
+        body { background: var(--app-body-bg) !important; }
+        <?php endif; ?>
         .navbar-brand { font-weight:600; letter-spacing:.3px; }
         .navbar .nav-link.active { font-weight:600; }
         .card { border:0; box-shadow:0 1px 3px rgba(0,0,0,.08); }
@@ -101,7 +153,7 @@ $renderMenu = static function (array $items, int $depth = 0) use (&$renderMenu, 
     </style>
 </head>
 <body>
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+<nav class="navbar navbar-expand-lg app-navbar <?= $navbarDark ? 'navbar-dark' : 'navbar-light' ?>">
     <div class="container">
         <a class="navbar-brand py-1" href="<?= site_url('admin') ?>"><img src="/assets/logo-light.svg" alt="Admin" style="height:32px;"></a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#topnav">
@@ -166,5 +218,6 @@ document.querySelectorAll('.navbar .dropdown').forEach(function (dd) {
     });
 });
 </script>
+<?= $this->renderSection('scripts') ?>
 </body>
 </html>

@@ -2,25 +2,65 @@
 
 namespace App\Controllers\Admin;
 
+use App\Libraries\DataTable;
 use App\Models\PermissionModel;
 use App\Models\RoleModel;
+use CodeIgniter\HTTP\ResponseInterface;
 
 class Roles extends BaseAdminController
 {
     public function index(): string
     {
-        $roles = (new RoleModel())->orderBy('id', 'ASC')->findAll();
-        $model = new RoleModel();
+        return $this->render('admin/roles/index', [], 'Roles');
+    }
 
-        $permCounts = [];
-        foreach ($roles as $r) {
-            $permCounts[$r['id']] = count($model->permissions((int) $r['id']));
+    public function data(): ResponseInterface
+    {
+        $model   = new RoleModel();
+        $builder = $model->builder()
+            ->select('roles.*, (SELECT COUNT(*) FROM role_permissions rp WHERE rp.role_id = roles.id) AS perm_count', false);
+
+        $dt = new DataTable(
+            $builder,
+            [0 => 'id', 1 => 'name', 2 => 'title', 3 => 'description', 4 => 'perm_count'],
+            ['name', 'title', 'description'],
+        );
+        [$rows, $filtered] = $dt->process($this->request->getGet());
+
+        $data = [];
+        foreach ($rows as $r) {
+            $badge = $r['is_system'] ? ' <span class="badge bg-info text-dark ms-1">system</span>' : '';
+            $data[] = [
+                'id'          => (int) $r['id'],
+                'name'        => '<code>' . esc($r['name']) . '</code>' . $badge,
+                'title'       => '<span class="fw-semibold">' . esc($r['title']) . '</span>',
+                'description' => esc($r['description'] ?? ''),
+                'permissions' => '<span class="badge bg-secondary">' . (int) $r['perm_count'] . '</span>',
+                'actions'     => $this->rowActions((int) $r['id'], (bool) $r['is_system']),
+            ];
         }
 
-        return $this->render('admin/roles/index', [
-            'roles'      => $roles,
-            'permCounts' => $permCounts,
-        ], 'Roles');
+        return $this->response->setJSON([
+            'draw'            => (int) ($this->request->getGet('draw') ?? 0),
+            'recordsTotal'    => $model->countAllResults(),
+            'recordsFiltered' => $filtered,
+            'data'            => $data,
+        ]);
+    }
+
+    private function rowActions(int $id, bool $isSystem): string
+    {
+        $html = '<div class="text-end">'
+            . '<a href="' . site_url('admin/roles/' . $id . '/edit') . '" class="btn btn-sm btn-outline-secondary"><i class="bi bi-pencil"></i></a> ';
+
+        if (! $isSystem) {
+            $html .= '<form action="' . site_url('admin/roles/' . $id . '/delete') . '" method="post" class="d-inline" onsubmit="return confirm(\'Delete this role?\');">'
+                . csrf_field()
+                . '<button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>'
+                . '</form>';
+        }
+
+        return $html . '</div>';
     }
 
     public function new(): string

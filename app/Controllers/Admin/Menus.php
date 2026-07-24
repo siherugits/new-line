@@ -2,11 +2,64 @@
 
 namespace App\Controllers\Admin;
 
+use App\Libraries\DataTable;
 use App\Models\MenuModel;
 use App\Models\RoleModel;
+use CodeIgniter\HTTP\ResponseInterface;
 
 class Menus extends BaseAdminController
 {
+    public function data(): ResponseInterface
+    {
+        $model = new MenuModel();
+
+        // Parent title lookup (self-join via subquery alias).
+        $builder = $model->builder()
+            ->select('menus.*, (SELECT p.title FROM menus p WHERE p.id = menus.parent_id) AS parent_title', false);
+
+        $dt = new DataTable(
+            $builder,
+            [0 => 'id', 1 => 'title', 2 => 'url', 4 => 'parent_title', 5 => 'sort_order', 6 => 'is_active'],
+            ['title', 'url'],
+        );
+        [$rows, $filtered] = $dt->process($this->request->getGet());
+
+        $data = [];
+        foreach ($rows as $m) {
+            $icon  = $m['icon'] ? '<i class="bi bi-' . esc($m['icon']) . ' me-1"></i>' : '';
+            $dash  = $m['parent_id'] ? '<span class="text-muted">&mdash; </span>' : '';
+            $data[] = [
+                'id'      => (int) $m['id'],
+                'title'   => '<span class="fw-semibold">' . $dash . $icon . esc($m['title']) . '</span>',
+                'url'     => '<code>' . esc($m['url']) . '</code>',
+                'icon'    => '<span class="text-muted small">' . esc($m['icon'] ?? '') . '</span>',
+                'parent'  => '<span class="text-muted small">' . esc($m['parent_title'] ?? '—') . '</span>',
+                'order'   => (int) $m['sort_order'],
+                'active'  => $m['is_active']
+                    ? '<span class="badge bg-success">Yes</span>'
+                    : '<span class="badge bg-secondary">No</span>',
+                'actions' => $this->rowActions((int) $m['id']),
+            ];
+        }
+
+        return $this->response->setJSON([
+            'draw'            => (int) ($this->request->getGet('draw') ?? 0),
+            'recordsTotal'    => $model->countAllResults(),
+            'recordsFiltered' => $filtered,
+            'data'            => $data,
+        ]);
+    }
+
+    private function rowActions(int $id): string
+    {
+        return '<div class="text-end">'
+            . '<a href="' . site_url('admin/menus/' . $id . '/edit') . '" class="btn btn-sm btn-outline-secondary"><i class="bi bi-pencil"></i></a> '
+            . '<form action="' . site_url('admin/menus/' . $id . '/delete') . '" method="post" class="d-inline" onsubmit="return confirm(\'Delete this menu?\');">'
+            . csrf_field()
+            . '<button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>'
+            . '</form></div>';
+    }
+
     private function roleChoices(): array
     {
         return (new RoleModel())->orderBy('title', 'ASC')->findAll();
@@ -70,15 +123,7 @@ class Menus extends BaseAdminController
 
     public function index(): string
     {
-        $menus = (new MenuModel())->orderBy('parent_id', 'ASC')->orderBy('sort_order', 'ASC')->findAll();
-
-        // map id -> title for showing parent name
-        $titles = [];
-        foreach ($menus as $m) {
-            $titles[$m['id']] = $m['title'];
-        }
-
-        return $this->render('admin/menus/index', ['menus' => $menus, 'titles' => $titles], 'Menus');
+        return $this->render('admin/menus/index', [], 'Menus');
     }
 
     public function new(): string

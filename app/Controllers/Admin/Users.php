@@ -3,6 +3,8 @@
 namespace App\Controllers\Admin;
 
 use App\Models\RoleModel;
+use App\Models\UserGridModel;
+use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\Shield\Entities\User;
 use CodeIgniter\Shield\Models\UserModel;
 
@@ -15,9 +17,66 @@ class Users extends BaseAdminController
 
     public function index(): string
     {
-        $users = (new UserModel())->orderBy('id', 'ASC')->findAll();
+        // Rows are loaded via AJAX (see data()); the view only needs the table shell.
+        return $this->render('admin/users/index', [], 'Users');
+    }
 
-        return $this->render('admin/users/index', ['users' => $users], 'Users');
+    /**
+     * Server-side DataTables endpoint. Returns JSON.
+     */
+    public function data(): ResponseInterface
+    {
+        $grid           = new UserGridModel();
+        $req            = $this->request->getGet();
+        [$rows, $count] = $grid->datatable($req);
+
+        $data = [];
+        foreach ($rows as $r) {
+            $data[] = [
+                'id'       => (int) $r['id'],
+                'username' => esc($r['username']),
+                'email'    => esc($r['email'] ?? '—'),
+                'roles'    => $this->rolesBadges($r['roles'] ?? ''),
+                'status'   => $r['active']
+                    ? '<span class="badge bg-success">Active</span>'
+                    : '<span class="badge bg-warning text-dark">Inactive</span>',
+                'actions'  => $this->rowActions((int) $r['id']),
+            ];
+        }
+
+        return $this->response->setJSON([
+            'draw'            => (int) ($req['draw'] ?? 0),
+            'recordsTotal'    => $grid->total(),
+            'recordsFiltered' => $count,
+            'data'            => $data,
+        ]);
+    }
+
+    private function rolesBadges(string $roles): string
+    {
+        $roles = array_filter(explode(',', $roles));
+        if ($roles === []) {
+            return '<span class="text-muted small">—</span>';
+        }
+
+        return implode(' ', array_map(
+            static fn ($g) => '<span class="badge bg-secondary">' . esc($g) . '</span>',
+            $roles
+        ));
+    }
+
+    private function rowActions(int $id): string
+    {
+        $edit   = site_url('admin/users/' . $id . '/edit');
+        $delete = site_url('admin/users/' . $id . '/delete');
+        $csrf   = csrf_field();
+
+        return '<div class="text-end">'
+            . '<a href="' . $edit . '" class="btn btn-sm btn-outline-secondary"><i class="bi bi-pencil"></i></a> '
+            . '<form action="' . $delete . '" method="post" class="d-inline" onsubmit="return confirm(\'Delete this user?\');">'
+            . $csrf
+            . '<button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>'
+            . '</form></div>';
     }
 
     public function new(): string
