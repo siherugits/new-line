@@ -7,7 +7,10 @@
     <div class="container d-flex justify-content-center p-5">
         <div class="card col-12 col-md-5 shadow-sm">
             <div class="card-body">
-                <h5 class="card-title mb-5"><?= lang('Auth.login') ?></h5>
+                <div class="text-center mb-4">
+                    <img src="/assets/logo.svg" alt="Company logo" style="height:52px;max-width:100%;">
+                </div>
+                <h5 class="card-title text-center mb-4"><?= lang('Auth.login') ?></h5>
 
                 <?php if (session('error') !== null) : ?>
                     <div class="alert alert-danger" role="alert"><?= esc(session('error')) ?></div>
@@ -47,7 +50,7 @@
                     <div class="mb-3">
                         <label class="form-label" for="captchaInput"><?= lang('Auth.captchaLabel') ?></label>
                         <div class="d-flex align-items-center gap-2 mb-2">
-                            <img src="<?= url_to('captcha') ?>" alt="captcha" id="captchaImage" style="border:1px solid #dee2e6;border-radius:.375rem;height:50px;">
+                            <img src="/captcha" alt="captcha" id="captchaImage" style="border:1px solid #dee2e6;border-radius:.375rem;height:50px;width:160px;object-fit:contain;background:#f8f9fa;">
                             <button type="button" class="btn btn-outline-secondary btn-sm" id="captchaReload" title="<?= lang('Auth.captchaReload') ?>">&#8635;</button>
                         </div>
                         <input type="text" class="form-control" id="captchaInput" name="captcha" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="<?= lang('Auth.captchaPlaceholder') ?>" required>
@@ -86,7 +89,7 @@
             var btn = document.getElementById('captchaReload');
             if (btn && img) {
                 btn.addEventListener('click', function () {
-                    var base = '<?= url_to('captcha') ?>';
+                    var base = '/captcha';
                     img.src = base + (base.indexOf('?') === -1 ? '?' : '&') + 'r=' + Date.now();
                 });
             }

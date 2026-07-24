@@ -103,7 +103,7 @@ $renderMenu = static function (array $items, int $depth = 0) use (&$renderMenu, 
 <body>
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
     <div class="container">
-        <a class="navbar-brand" href="<?= site_url('admin') ?>"><i class="bi bi-grid-1x2-fill me-1"></i>Admin</a>
+        <a class="navbar-brand py-1" href="<?= site_url('admin') ?>"><img src="/assets/logo-light.svg" alt="Admin" style="height:32px;"></a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#topnav">
             <span class="navbar-toggler-icon"></span>
         </button>
@@ -119,6 +119,7 @@ $renderMenu = static function (array $items, int $depth = 0) use (&$renderMenu, 
                     <ul class="dropdown-menu dropdown-menu-end">
                         <li><span class="dropdown-item-text small text-muted">Roles: <?= esc(implode(', ', $user->getGroups() ?: ['—'])) ?></span></li>
                         <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="<?= site_url('admin/account/password') ?>"><i class="bi bi-key me-2"></i>Ganti Password</a></li>
                         <li><a class="dropdown-item" href="<?= site_url('logout') ?>"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
                     </ul>
                 </li>

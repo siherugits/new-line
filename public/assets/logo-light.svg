@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="180" height="40" viewBox="0 0 180 40" role="img" aria-label="Company logo">
+    <defs>
+        <linearGradient id="gl" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#818cf8"/>
+            <stop offset="1" stop-color="#38bdf8"/>
+        </linearGradient>
+    </defs>
+    <!-- mark -->
+    <rect x="2" y="6" width="28" height="28" rx="7" fill="url(#gl)"/>
+    <path d="M9 25 L9 15 L16 22 L23 15 L23 25" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+    <!-- wordmark -->
+    <text x="38" y="22" font-family="Segoe UI, Arial, sans-serif" font-size="16" font-weight="700" fill="#ffffff">Nusa<tspan fill="#93c5fd">Tech</tspan></text>
+    <text x="38" y="33" font-family="Segoe UI, Arial, sans-serif" font-size="7.5" letter-spacing="1.8" fill="#9ca3af">ADMIN PORTAL</text>
+</svg>

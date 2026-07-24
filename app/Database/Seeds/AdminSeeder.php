@@ -29,7 +29,7 @@ class AdminSeeder extends Seeder
                 'name'        => $name,
                 'title'       => $info['title'] ?? ucfirst($name),
                 'description' => $info['description'] ?? '',
-                'is_system'   => in_array($name, ['superadmin', 'user'], true) ? 1 : 0,
+                'is_system'   => $name === 'superadmin' ? 1 : 0,
                 'created_at'  => $now,
                 'updated_at'  => $now,
             ]);
@@ -130,17 +130,21 @@ class AdminSeeder extends Seeder
             array_flip(['superadmin', 'admin', 'developer'])
         ));
 
-        $items = [
+        // Top-level items. "Administration" is a parent-only dropdown whose
+        // children (Users, Roles, Permissions, Menus) are nested beneath it.
+        $tree = [
             ['title' => 'Dashboard', 'url' => 'admin', 'icon' => 'speedometer2', 'order' => 1],
-            ['title' => 'Users', 'url' => 'admin/users', 'icon' => 'people', 'order' => 2],
-            ['title' => 'Roles', 'url' => 'admin/roles', 'icon' => 'shield-lock', 'order' => 3],
-            ['title' => 'Permissions', 'url' => 'admin/permissions', 'icon' => 'key', 'order' => 4],
-            ['title' => 'Menus', 'url' => 'admin/menus', 'icon' => 'list', 'order' => 5],
+            ['title' => 'Administration', 'url' => '', 'icon' => 'gear', 'order' => 2, 'children' => [
+                ['title' => 'Users', 'url' => 'admin/users', 'icon' => 'people', 'order' => 1],
+                ['title' => 'Roles', 'url' => 'admin/roles', 'icon' => 'shield-lock', 'order' => 2],
+                ['title' => 'Permissions', 'url' => 'admin/permissions', 'icon' => 'key', 'order' => 3],
+                ['title' => 'Menus', 'url' => 'admin/menus', 'icon' => 'list', 'order' => 4],
+            ]],
         ];
 
-        foreach ($items as $it) {
+        $insertMenu = function (array $it, ?int $parentId) use ($menuTable, $accessTable, $adminRoles, $now, &$insertMenu): void {
             $menuTable->insert([
-                'parent_id'  => null,
+                'parent_id'  => $parentId,
                 'title'      => $it['title'],
                 'url'        => $it['url'],
                 'icon'       => $it['icon'],
@@ -153,6 +157,13 @@ class AdminSeeder extends Seeder
             foreach ($adminRoles as $rid) {
                 $accessTable->insert(['menu_id' => $menuId, 'role_id' => $rid]);
             }
+            foreach ($it['children'] ?? [] as $child) {
+                $insertMenu($child, $menuId);
+            }
+        };
+
+        foreach ($tree as $it) {
+            $insertMenu($it, null);
         }
     }
 }

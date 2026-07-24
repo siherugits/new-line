@@ -47,6 +47,59 @@ class MenuModel extends Model
     }
 
     /**
+     * Decide whether a user (by role names) may access the page at $uri,
+     * based on the menu_access checkboxes.
+     *
+     * Rules:
+     *  - Superadmin may access everything.
+     *  - If no active menu maps to this URL, it's not a menu-guarded page
+     *    (e.g. it's already protected by another filter) -> allow.
+     *  - Otherwise the user must have at least one of the roles that are
+     *    checked for that menu.
+     *
+     * @param string[] $roleNames
+     */
+    public function canAccessUri(array $roleNames, bool $isSuper, string $uri): bool
+    {
+        if ($isSuper) {
+            return true;
+        }
+
+        $uri = trim($uri, '/');
+
+        // Find active menus whose URL matches this request.
+        $menus = $this->db->table('menus')
+            ->select('id')
+            ->where('is_active', 1)
+            ->whereIn('url', [$uri, '/' . $uri])
+            ->get()->getResultArray();
+
+        if ($menus === []) {
+            return true; // URL is not tied to any menu — not guarded here
+        }
+
+        $menuIds = array_column($menus, 'id');
+
+        // Resolve the user's role names to ids.
+        $roleIds = $roleNames === [] ? [] : array_column(
+            $this->db->table('roles')->select('id')->whereIn('name', $roleNames)->get()->getResultArray(),
+            'id'
+        );
+
+        if ($roleIds === []) {
+            return false;
+        }
+
+        // Allow if any matching menu is checked for any of the user's roles.
+        $count = $this->db->table('menu_access')
+            ->whereIn('menu_id', $menuIds)
+            ->whereIn('role_id', $roleIds)
+            ->countAllResults();
+
+        return $count > 0;
+    }
+
+    /**
      * Build the menu tree visible to a set of role names.
      * Superadmin (passed as $isSuper) sees everything.
      *

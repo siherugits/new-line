@@ -11,7 +11,12 @@
         ['label' => 'Permissions', 'value' => $stats['permissions'], 'icon' => 'key', 'color' => 'warning', 'url' => 'admin/permissions'],
         ['label' => 'Menus', 'value' => $stats['menus'], 'icon' => 'list', 'color' => 'info', 'url' => 'admin/menus'],
     ];
-    foreach ($cards as $c): ?>
+    foreach ($cards as $c):
+        // Only show a card if the user has access to that menu.
+        if (! isset($allowedUrls[trim($c['url'], '/')])) {
+            continue;
+        }
+        ?>
         <div class="col-sm-6 col-lg-3">
             <a href="<?= site_url($c['url']) ?>" class="text-decoration-none">
                 <div class="card h-100">
@@ -28,6 +33,12 @@
             </a>
         </div>
     <?php endforeach; ?>
+
+    <?php if (empty(array_filter($cards, static fn ($c) => isset($allowedUrls[trim($c['url'], '/')])))): ?>
+        <div class="col-12">
+            <div class="card"><div class="card-body text-muted">Selamat datang. Gunakan menu di atas untuk mulai.</div></div>
+        </div>
+    <?php endif; ?>
 </div>
 
 <div class="card mt-4">

@@ -16,8 +16,12 @@ $routes->get('captcha', 'CaptchaController::index');
 $routes->get('login', 'Auth\LoginController::loginView', ['as' => 'login']);
 $routes->post('login', 'Auth\LoginController::loginAction');
 
-$routes->group('admin', ['filter' => 'admin', 'namespace' => 'App\Controllers\Admin'], static function ($routes): void {
+$routes->group('admin', ['filter' => ['admin', 'menuaccess'], 'namespace' => 'App\Controllers\Admin'], static function ($routes): void {
     $routes->get('/', 'Dashboard::index');
+
+    // Account (self-service)
+    $routes->get('account/password', 'Account::password');
+    $routes->post('account/password', 'Account::updatePassword');
 
     // Users
     $routes->get('users', 'Users::index');
