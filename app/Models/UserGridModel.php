@@ -32,17 +32,29 @@ class UserGridModel
      */
     private function baseBuilder()
     {
-        return $this->db->table('users u')
-            ->select("u.id, u.username, u.active,
-                      ident.secret AS email,
-                      GROUP_CONCAT(DISTINCT g.`group` ORDER BY g.`group` SEPARATOR ',') AS roles", false)
+        $isPg = $this->db->DBDriver === 'Postgre';
+
+        // Aggregate the user's roles into a comma list. GROUP_CONCAT is
+        // MySQL-only; PostgreSQL uses STRING_AGG and quotes the reserved
+        // word "group" with double quotes (backticks are MySQL-only).
+        $rolesExpr = $isPg
+            ? 'STRING_AGG(DISTINCT g."group", \',\' ORDER BY g."group") AS roles'
+            : 'GROUP_CONCAT(DISTINCT g.`group` ORDER BY g.`group` SEPARATOR \',\') AS roles';
+
+        $builder = $this->db->table('users u')
+            ->select("u.id, u.username, u.active, ident.secret AS email, {$rolesExpr}", false)
             ->join(
                 'auth_identities ident',
                 "ident.user_id = u.id AND ident.type = 'email_password'",
                 'left'
             )
-            ->join('auth_groups_users g', 'g.user_id = u.id', 'left')
-            ->groupBy('u.id');
+            ->join('auth_groups_users g', 'g.user_id = u.id', 'left');
+
+        // PostgreSQL requires every non-aggregated selected column in GROUP BY;
+        // MySQL is happy grouping by the primary key alone.
+        return $isPg
+            ? $builder->groupBy('u.id, u.username, u.active, ident.secret')
+            : $builder->groupBy('u.id');
     }
 
     /**

@@ -42,13 +42,15 @@ class DataTable
         $start  = (int) ($req['start'] ?? 0);
         $length = (int) ($req['length'] ?? 10);
 
-        // Search across the configured columns.
+        // Search across the configured columns. `insensitiveSearch: true`
+        // makes CI4 lower-case both sides, so it stays case-insensitive on
+        // PostgreSQL (whose LIKE is case-sensitive) as well as MySQL.
         if ($search !== '' && $this->searchColumns !== []) {
             $this->builder->groupStart();
             foreach ($this->searchColumns as $i => $col) {
                 $i === 0
-                    ? $this->builder->like($col, $search)
-                    : $this->builder->orLike($col, $search);
+                    ? $this->builder->like($col, $search, 'both', null, true)
+                    : $this->builder->orLike($col, $search, 'both', null, true);
             }
             $this->builder->groupEnd();
         }
