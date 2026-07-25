@@ -64,3 +64,9 @@ $routes->group('admin', ['filter' => ['admin', 'menuaccess'], 'namespace' => 'Ap
     $routes->post('menus/(:num)', 'Menus::update/$1');
     $routes->post('menus/(:num)/delete', 'Menus::delete/$1');
 });
+
+// Contoh menu custom "Menu Utama" (URL di luar grup admin).
+// Filter dipasang manual: 'admin' (harus login + admin.access) dan
+// 'menuaccess' (role harus dicentang pada menu ini di halaman Menus).
+$routes->get('menuutama/submenu1', 'MenuUtama::submenu1', ['filter' => ['admin', 'menuaccess']]);
+$routes->get('menuutama/submenu1/data', 'MenuUtama::submenu1Data', ['filter' => 'admin']);
