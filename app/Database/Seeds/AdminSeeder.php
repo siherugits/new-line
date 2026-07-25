@@ -139,6 +139,7 @@ class AdminSeeder extends Seeder
                 ['title' => 'Roles', 'url' => 'admin/roles', 'icon' => 'shield-lock', 'order' => 2],
                 ['title' => 'Permissions', 'url' => 'admin/permissions', 'icon' => 'key', 'order' => 3],
                 ['title' => 'Menus', 'url' => 'admin/menus', 'icon' => 'list', 'order' => 4],
+                ['title' => 'Tema', 'url' => 'admin/theme', 'icon' => 'palette', 'order' => 5],
             ]],
         ];
 
