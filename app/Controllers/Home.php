@@ -2,6 +2,8 @@
 
 namespace App\Controllers;
 
+use App\Models\MenuModel;
+
 class Home extends BaseController
 {
     public function index()
@@ -12,17 +14,19 @@ class Home extends BaseController
             return redirect()->to('login');
         }
 
-        // Only send admins to the admin panel. Users without admin access
-        // would otherwise bounce between "/" and "/admin" (redirect loop).
-        if ($auth->user()->can('admin.access')) {
+        $user      = $auth->user();
+        $roleNames = $user->getGroups();
+        $isSuper   = in_array('superadmin', $roleNames, true);
+
+        // Anyone who has at least one visible menu may enter the admin area.
+        if ((new MenuModel())->hasAnyMenu($roleNames, $isSuper)) {
             return redirect()->to('admin');
         }
 
-        // Logged-in but no admin rights: log out and show a message,
-        // rather than looping.
+        // No menu at all: log out rather than bounce in a redirect loop.
         $auth->logout();
 
         return redirect()->to('login')
-            ->with('error', 'Akun ini tidak memiliki akses ke area admin.');
+            ->with('error', 'Akun ini tidak memiliki menu yang dapat diakses.');
     }
 }

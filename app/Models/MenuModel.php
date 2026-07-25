@@ -100,6 +100,35 @@ class MenuModel extends Model
     }
 
     /**
+     * Whether the given roles have at least one menu checked for them.
+     * Used to decide if a user may enter the admin area at all
+     * (superadmin always may).
+     *
+     * @param string[] $roleNames
+     */
+    public function hasAnyMenu(array $roleNames, bool $isSuper = false): bool
+    {
+        if ($isSuper) {
+            return true;
+        }
+
+        $roleIds = $roleNames === [] ? [] : array_column(
+            $this->db->table('roles')->select('id')->whereIn('name', $roleNames)->get()->getResultArray(),
+            'id'
+        );
+
+        if ($roleIds === []) {
+            return false;
+        }
+
+        return $this->db->table('menu_access ma')
+            ->join('menus m', 'm.id = ma.menu_id')
+            ->where('m.is_active', 1)
+            ->whereIn('ma.role_id', $roleIds)
+            ->countAllResults() > 0;
+    }
+
+    /**
      * Build the menu tree visible to a set of role names.
      * Superadmin (passed as $isSuper) sees everything.
      *
